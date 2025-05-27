@@ -236,238 +236,157 @@ else:
         st.latex(sp.latex(expr))
 ##################################################################################################################################
 
-# # Adding relations for capital voltages based on edge properties
-# capital_V_relationships = {}  #KEY->EDGE NUMBER , VALUE->PRPOERTY 2
-# for (edge, number) in edge_numbering.items():
-#     (component, value) = edge_properties[edge]
-#     if component == "V":  # Voltage source
-#         capital_V_relationships[number] = value  # Direct value
-#     else:  # Resistor
-#         capital_V_relationships[number] = sp.symbols(f'i{number}') * value  # Relation to small i
+# Adding relations for capital voltages based on edge properties
+capital_V_relationships = {}  # KEY: EDGE NUMBER, VALUE: Voltage or i*R expression
 
-# # SUBSTITUTING small i_j from the tie-set relation into the capital V relationships
-# # for (edge,number) in edge_numbering.items():
-# #     if edge in capital_V_relationships:
-# #         v_j_expr = capital_V_relationships[number]
-# #         # Substitute small i_j with the corresponding I_link variable
-# #         for j in range(len(I_link)):
-# #             v_j_expr = v_j_expr.subs(sp.symbols(f'i{number}'), I_link[j])  # Substitute small current with capital current
-# #         capital_V_relationships[number] = v_j_expr  # Update the expression
+for (edge, number) in edge_numbering.items():
+    component, value = edge_properties[edge]
+    if component == "V":  # Voltage source
+        capital_V_relationships[number] = value
+    else:  # Resistor
+        capital_V_relationships[number] = sp.symbols(f'i{number}') * value
 
+# Step 2: Substitute V_tree symbols with expressions from capital_V_relationships
+for j in range(len(V_tree)):
+    capital_index = j + 1  # Since numbering starts at 1
+    if capital_index in capital_V_relationships:
+        cut_set_relation = cut_set_relation.subs(V_tree[j], capital_V_relationships[capital_index])
 
-# # for (edge,number) in edge_numbering.items():
-# #     if edge in capital_V_relationships:
-# #         capital_V_relationships[number]= sp.symbols(f'i{number}')
+# Step 3: Display the cut-set relation (voltage equation before current substitution)
+# st.write("### Cut-set relation (for voltages):")
+# st.latex(sp.latex(cut_set_relation))
 
-# # Substitute the expressions into the cut-set relation
-# for j in range(len(V_tree)):
-#     capital_index = j + 1  # Because our numbering starts from 1
-#     if capital_index in capital_V_relationships:
-#         cut_set_relation = cut_set_relation.subs(V_tree[j], capital_V_relationships[capital_index])
+# Step 4: Create a system of tie-set equations and solve for small currents
+branch_current_symbols = sp.symbols(f'i1:{num_total_edges + 1}')  # i1, i2, ..., iN
+tie_set_eqs = [tie_set_relation.lhs[i] - tie_set_relation.rhs[i] for i in range(len(tie_set_relation.lhs))]
+small_currents_solution = sp.solve(tie_set_eqs, branch_current_symbols)
 
-# # Display relations
-# print("\nCut-set relation (for voltages):")
-# sp.pprint(cut_set_relation)
+# Step 5: Substitute small currents into the cut-set relation
+for j in range(len(I_each_edge)):
+    if branch_current_symbols[j] in small_currents_solution:
+        cut_set_relation = cut_set_relation.subs(branch_current_symbols[j], small_currents_solution[branch_current_symbols[j]])
 
-# #branch_current_symbols = sp.symbols(f'i1:{num_total_edges + 1}')  # i1, i2, ..., i(num_total_edges)
-
-# # Create a system of equations from the tie-set relation
-# tie_set_eqs = [tie_set_relation.lhs[i] - tie_set_relation.rhs[i] for i in range(len(tie_set_relation.lhs))]
-
-# # Solve for small currents (i_j) in terms of capital currents (I_j)
-# small_currents_solution = sp.solve(tie_set_eqs, branch_current_symbols)
-
-# # Substitute small currents into the cut-set relation
-# for j in range(len(I_each_edge)):
-#     if branch_current_symbols[j] in small_currents_solution:
-#         cut_set_relation = cut_set_relation.subs(branch_current_symbols[j], small_currents_solution[branch_current_symbols[j]])
-
-# # Display the modified cut-set relation
-# print("\nModified Cut-set relation (after substituting i_j in terms of capital I_j):")
-# sp.pprint(cut_set_relation)
+# Step 6: Display the final modified cut-set relation
+# st.write("### Modified Cut-set relation (after substituting iⱼ in terms of capital Iⱼ):")
+# st.latex(sp.latex(cut_set_relation))
 
 
 
 # ##################################################################################################################################
 
 
-# k = len(GRAPH.edges()) - len(MST.edges())  #NUMBER OF RED EDGES
+k = len(GRAPH.edges()) - len(MST.edges())  #NUMBER OF RED EDGES
 
-# # Extract the last k equations from the cut-set relation
-# cut_set_last_k_eqs = cut_set_relation.lhs[-k:]
-# cut_set_last_k_rhs = cut_set_relation.rhs[-k:]
+# Extract the last k equations from the cut-set relation
+cut_set_last_k_eqs = cut_set_relation.lhs[-k:]
+cut_set_last_k_rhs = cut_set_relation.rhs[-k:]
 
-# # Display the last k equations (LHS and RHS)
+# Display the last k equations (LHS and RHS)
 # print(f"\nLast {k} equations of the modified Cut-set relation:")
 # for (lhs, rhs) in zip(cut_set_last_k_eqs, cut_set_last_k_rhs):
 #     sp.pprint(sp.Eq(lhs, rhs))
 
 
 
-# # Replace RHS elements of the last k equations based on edge properties
-# modified_cut_set_last_k_eqs = []
+# Replace RHS elements of the last k equations based on edge properties
+modified_cut_set_last_k_eqs = []
 
-# for (lhs,rhs) in zip(cut_set_last_k_eqs, cut_set_last_k_rhs):
-#     # Iterate through all edges and update RHS terms
-#     updated_rhs = rhs
-#     for (edge,number) in edge_numbering.items():
-#         (component,value) = edge_properties[edge]
+for (lhs,rhs) in zip(cut_set_last_k_eqs, cut_set_last_k_rhs):
+    # Iterate through all edges and update RHS terms
+    updated_rhs = rhs
+    for (edge,number) in edge_numbering.items():
+        (component,value) = edge_properties[edge]
 
-#         # Replace v_i based on edge properties
-#         v_symbol = sp.symbols(f'v{number}')  # Symbol for voltage v_i
-#         if component == "V":  # Voltage source
-#             updated_rhs = updated_rhs.subs(v_symbol, value)  
-#         elif component in {"R", "C", "L"}:  
-#             I_symbol = sp.symbols(f'I{number}')  # Symbol for current I_i
-#             updated_rhs = updated_rhs.subs(v_symbol, value * I_symbol)  # Replace v_i with value * I_i
+        # Replace v_i based on edge properties
+        v_symbol = sp.symbols(f'v{number}')  # Symbol for voltage v_i
+        if component == "V":  # Voltage source
+            updated_rhs = updated_rhs.subs(v_symbol, value)  
+        elif component in {"R", "C", "L"}:  
+            I_symbol = sp.symbols(f'I{number}')  # Symbol for current I_i
+            updated_rhs = updated_rhs.subs(v_symbol, value * I_symbol)  # Replace v_i with value * I_i
 
-#     # Append the modified equation to the list
-#     modified_cut_set_last_k_eqs.append(sp.Eq(lhs, updated_rhs))
+    # Append the modified equation to the list
+    modified_cut_set_last_k_eqs.append(sp.Eq(lhs, updated_rhs))
 
 
 # print(f"\nModified Last {k} equations of the Cut-set relation (RHS replaced):")
 # for eq in modified_cut_set_last_k_eqs:
 #     sp.pprint(eq)
-# I_symbols = [sp.symbols(f'I{len(MST.edges()) + i + 1}') for i in range(k)]  # Link currents
+I_symbols = [sp.symbols(f'I{len(MST.edges()) + i + 1}') for i in range(k)]  # Link currents
 
-# # Extract LHS and RHS for solving
-# equations = [eq.lhs - eq.rhs for eq in modified_cut_set_last_k_eqs]
+# Extract LHS and RHS for solving
+equations = [eq.lhs - eq.rhs for eq in modified_cut_set_last_k_eqs]
 
-# # Solve the equations for I_i
-# solutions = sp.solve(equations, I_symbols)
+# Solve the equations for I_i
+solutions = sp.solve(equations, I_symbols)
 
-# # Display the solutions for each I_i
+# Display the solutions for each I_i
 
-# print("\nSolutions for I_i (link currents) in terms of s (direction changed):")
-# for (I_symbol, solution) in solutions.items():
-#     sp.pprint(sp.Eq(I_symbol, (-1)*solution))
+print("\nSolutions for I_i (link currents) in terms of s (direction changed):")
+for (I_symbol, solution) in solutions.items():
+    sp.pprint(sp.Eq(I_symbol, (-1)*solution))
 
-# # all i_i (currents through edges) in terms of s
-# all_currents = []
-# for i, branch_current in enumerate(I_each_edge):
-#     current_expr = (-1)*tie_set_relation.lhs[i]  # Directly use the LHS of the tie-set relation
-#     for I_symbol, solution in solutions.items():
-#         current_expr = current_expr.subs(I_symbol, solution)  # Substitute independent I_i values
-#     all_currents.append(sp.simplify(current_expr))
+# all i_i (currents through edges) in terms of s
+all_currents = []
+for i, branch_current in enumerate(I_each_edge):
+    current_expr = (-1)*tie_set_relation.lhs[i]  # Directly use the LHS of the tie-set relation
+    for I_symbol, solution in solutions.items():
+        current_expr = current_expr.subs(I_symbol, solution)  # Substitute independent I_i values
+    all_currents.append(sp.simplify(current_expr))
 
-# #  all v_i (voltages across edges) in terms of s
-# all_voltages = []
-# for (i, branch_voltage) in enumerate(V_each_edge):
-#     voltage_expr = cut_set_relation.lhs[i]  # Directly use the LHS of the cut-set relation
-#     for (I_symbol, solution) in solutions.items():
-#         voltage_expr = voltage_expr.subs(I_symbol, solution)  # Substitute independent I_i values
-#     all_voltages.append(sp.simplify(voltage_expr))
+#  all v_i (voltages across edges) in terms of s
+all_voltages = []
+for (i, branch_voltage) in enumerate(V_each_edge):
+    voltage_expr = cut_set_relation.lhs[i]  # Directly use the LHS of the cut-set relation
+    for (I_symbol, solution) in solutions.items():
+        voltage_expr = voltage_expr.subs(I_symbol, solution)  # Substitute independent I_i values
+    all_voltages.append(sp.simplify(voltage_expr))
 
-# # Display results
-# print("\nAll currents (i_i) through edges in terms of s:")
-# for i, current_expr in enumerate(all_currents, start=1):
-#     sp.pprint(sp.Eq(sp.symbols(f'i{i}'), current_expr))
+# Display results
+print("\nAll currents (i_i) through edges in terms of s:")
+for i, current_expr in enumerate(all_currents, start=1):
+    sp.pprint(sp.Eq(sp.symbols(f'i{i}'), current_expr))
 
-# print("\nAll voltages (v_i) across edges in terms of s:")
-# for i, voltage_expr in enumerate(all_voltages, start=1):
-#     sp.pprint(sp.Eq(sp.symbols(f'v{i}'), voltage_expr))
-
-# ################################################################################################################################
-
-
-# from sympy import inverse_laplace_transform, symbols, simplify
-# t = symbols('t', real=True, positive=True)
-
-# # TIME-DOMAIN CURRENTS i_i(t)
-# time_domain_currents = []
-# for i, current_expr in enumerate(all_currents):
-#     current_time_expr = inverse_laplace_transform(current_expr, s, t)
-#     time_domain_currents.append(simplify(current_time_expr))
-
-# # TIME-DOMAIN VOLTAGES v_i(t)
-# time_domain_voltages = []
-# for i, voltage_expr in enumerate(all_voltages):
-#     voltage_time_expr = inverse_laplace_transform(voltage_expr, s, t)
-#     time_domain_voltages.append(simplify(voltage_time_expr))
-
-# # DISPLAY RESULTS
-# print("\nALL CURRENTS (i_i) THROUGH EDGES IN TERMS OF t:")
-# for i, current_time_expr in enumerate(time_domain_currents, start=1):
-#     sp.pprint(sp.Eq(sp.symbols(f'i{i}(t)'), current_time_expr))
-
-# print("\nALL VOLTAGES (v_i) ACROSS EDGES IN TERMS OF t:")
-# for i, voltage_time_expr in enumerate(time_domain_voltages, start=1):
-#     sp.pprint(sp.Eq(sp.symbols(f'v{i}(t)'), voltage_time_expr))
-
-
+print("\nAll voltages (v_i) across edges in terms of s:")
+for i, voltage_expr in enumerate(all_voltages, start=1):
+    sp.pprint(sp.Eq(sp.symbols(f'v{i}'), voltage_expr))
 
 # ################################################################################################################################
-# import numpy as np
-# import matplotlib.pyplot as plt
-# from sympy import inverse_laplace_transform, symbols, lambdify
 
-# # Define symbolic time variable
-# t = symbols('t', real=True, positive=True)
 
-# # Compute time-domain currents i_i(t)
-# time_domain_currents = []
-# for (i, current_expr) in enumerate(all_currents):
-#     current_time_expr = inverse_laplace_transform(current_expr, s, t)
-#     current_time_func = lambdify(t,current_time_expr, "numpy")
-#     time_domain_currents.append(current_time_func)
+import streamlit as st
+from sympy import inverse_laplace_transform, symbols, simplify, Eq, latex
 
-# # Compute time-domain voltages v_i(t)
-# time_domain_voltages = []
-# for i, voltage_expr in enumerate(all_voltages):
-#     voltage_time_expr = inverse_laplace_transform(voltage_expr, s, t)
-#     # Convert to a lambda function for numerical evaluation
-#     voltage_time_func = lambdify(t, voltage_time_expr, "numpy")
-#     time_domain_voltages.append(voltage_time_func)
+t = symbols('t', real=True, positive=True)
 
-# # Define a time range for plotting
-# time_values = np.linspace(0, 15, 1000)  # Adjust this range as needed
+# TIME-DOMAIN CURRENTS i_i(t)
+time_domain_currents = []
+for i, current_expr in enumerate(all_currents):
+    current_time_expr = inverse_laplace_transform(current_expr, s, t)
+    time_domain_currents.append(simplify(current_time_expr))
 
-# # Evaluate the functions over the time range for currents and voltages
-# i_values = []
-# for i_t_func in time_domain_currents:
-#     i_result = i_t_func(time_values)
-#     if np.ndim(i_result) == 0:  # Check if the result is a constant
-#         i_values.append(np.full_like(time_values, i_result))
-#     else:
-#         i_values.append(i_result)
+# TIME-DOMAIN VOLTAGES v_i(t)
+time_domain_voltages = []
+for i, voltage_expr in enumerate(all_voltages):
+    voltage_time_expr = inverse_laplace_transform(voltage_expr, s, t)
+    time_domain_voltages.append(simplify(voltage_time_expr))
 
-# # Debugging: check if voltage functions can handle time_values
-# v_values = []
-# for v_t_func in time_domain_voltages:
-#     try:
-#         v_result = v_t_func(time_values)
-#         if np.ndim(v_result) == 0:  # If result is a constant, handle it as such
-#             v_values.append(np.full_like(time_values, v_result))
-#         else:
-#             v_values.append(v_result)
-#     except Exception as e:
-#         print(f"Error evaluating voltage function: {e}")
-#         v_values.append(np.zeros_like(time_values))  # Fallback to zeros if there's an error
+# DISPLAY RESULTS IN STREAMLIT
+st.subheader("All Currents $i_i(t)$ through edges:")
+for i, current_time_expr in enumerate(time_domain_currents, start=1):
+    st.latex(latex(Eq(symbols(f'i{i}(t)'), current_time_expr)))
 
-# # Convert v_values to a NumPy array
-# v_values = np.array(v_values)
+st.subheader("All Voltages $v_i(t)$ across edges:")
+for i, voltage_time_expr in enumerate(time_domain_voltages, start=1):
+    st.latex(latex(Eq(symbols(f'v{i}(t)'), voltage_time_expr)))
 
-# # Plot all currents i_i(t) in one graph
-# plt.figure(figsize=(15, 7.5))
-# for i in range(len(i_values)):
-#     plt.plot(time_values, abs(i_values[i]), label=f'i_{i+1}(t)')
-# plt.title('Currents i_i(t) vs Time')
-# plt.xlabel('Time (t)')
-# plt.ylabel('Current (i_i(t))')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+st.session_state["time_domain_currents"] = time_domain_currents
+st.session_state["time_domain_voltages"] = time_domain_voltages
+st.session_state["laplace_s"] = s
 
-# # Plot all voltages v_i(t) in one graph
-# plt.figure(figsize=(15, 7.5))
-# for i in range(len(v_values)):
-#     plt.plot(time_values, abs(v_values[i]), label=f'v_{i+1}(t)')
-# plt.title('Voltages v_i(t) vs Time')
-# plt.xlabel('Time (t)')
-# plt.ylabel('Voltage (v_i(t))')
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+
+
+
 
 
 
