@@ -1,8 +1,8 @@
 
 
 
-Use it!
-[![Version2](https://blank-app-igpqlv707mf.streamlit.app/)
+
+[use it!](https://blank-app-igpqlv707mf.streamlit.app/)
 
 ### How to run it on your own machine
 
