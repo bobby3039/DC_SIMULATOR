@@ -16,7 +16,7 @@ if "node_count" not in st.session_state:
     st.session_state.node_count = 0
 
 st.set_page_config(layout="centered")
-st.title("DC_CIRCUIT_SIMULATOR")
+st.title("DC CIRCUIT SIMULATOR")
 
 # ------------------ Finalize Graph ------------------
 if not st.session_state.done and st.button("Finish Graph"):
@@ -95,7 +95,7 @@ for (u, v), lbl in st.session_state.edge_labels.items():
 
 if st.session_state.done:
     st.success("Graph is finalized.")
-    st.info("👉 Now go to **'🧾 Finalized Graph Details'** from the **sidebar** to see the summary.")
+    st.info("👉 Now go to **'## Finalized Graph Details'** from the **sidebar** to see the summary.")
 st.sidebar.title("Nav")
 
 

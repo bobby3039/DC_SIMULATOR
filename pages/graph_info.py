@@ -6,7 +6,7 @@ st.title("Final Graph Info Page")
 st.write("This is the graph info page.")
 
 
-st.title("🧾 Finalized Graph Details")
+st.title("Finalized Graph Details")
 
 if "done" in st.session_state and st.session_state.done:
     GRAPH = nx.DiGraph()

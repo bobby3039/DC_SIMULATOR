@@ -17,11 +17,11 @@ time_domain_voltages_exprs = st.session_state["time_domain_voltages"]
 
 # Time input controls
 end_time = st.number_input("End time", min_value=1.0, max_value=100.0, value=15.0)
-num_points = st.slider("Number of time points", 100, 2000, 1000)
+#num_points = st.slider("Number of time points", 100, 2000, 1000)
 
 # Define time values
 t = symbols('t', real=True, positive=True)
-time_values = np.linspace(0, end_time, num_points)
+time_values = np.linspace(0, end_time, 100000)
 
 # Lambdify and evaluate currents
 i_values = []
@@ -45,7 +45,7 @@ for expr in time_domain_voltages_exprs:
 st.subheader("Currents $i_i(t)$ vs Time")
 fig1, ax1 = plt.subplots(figsize=(15, 7.5))
 for i, y in enumerate(i_values):
-    ax1.plot(time_values, abs(y), label=f'$i_{{{i+1}}}(t)$')
+    ax1.plot(time_values, y, label=f'$i_{{{i+1}}}(t)$')
 ax1.set_xlabel('Time (t)')
 ax1.set_ylabel('Current (A)')
 ax1.set_title('Currents through edges')
@@ -57,7 +57,7 @@ st.pyplot(fig1)
 st.subheader("Voltages $v_i(t)$ vs Time")
 fig2, ax2 = plt.subplots(figsize=(15, 7.5))
 for i, y in enumerate(v_values):
-    ax2.plot(time_values, abs(y), label=f'$v_{{{i+1}}}(t)$')
+    ax2.plot(time_values, y, label=f'$v_{{{i+1}}}(t)$')
 ax2.set_xlabel('Time (t)')
 ax2.set_ylabel('Voltage (V)')
 ax2.set_title('Voltages across edges')

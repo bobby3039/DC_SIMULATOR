@@ -53,23 +53,14 @@ for (edge,(component_type, value)) in edge_properties.items():
 # 'MST' IS UNDIRECTED. 'GRAPH' WAS DIRECTED.
 MST = nx.minimum_spanning_tree(GRAPH.to_undirected())
 
-# VISUALIZING THE GRAPH  AND MST
-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-# pos = nx.spring_layout(GRAPH)
-# nx.draw_networkx_nodes(GRAPH, pos, node_color="lightblue", node_size=520)
-# nx.draw_networkx_edges(GRAPH, pos, edge_color="grey", arrows=True ,arrowsize=30)    # DIRECTED GRAPH IS SHOWN WITH GREY COLOR( i.e with arrow)
-# nx.draw_networkx_labels(GRAPH, pos, font_size=15, font_family="DejaVu Sans")
-# nx.draw_networkx_edges(MST, pos, edge_color="green", width=3)     # DIRECTED GRAPH IS SHOWN WITH GREY COLOR (i.e without arrow)
-# plt.axis("off")
-# plt.show()
+st.markdown("### Minimum Spanning Tree of the graph:")
+st.write("Green edges :- edges of MST ,  Red Edges:- edges of co-tree")
 fig, ax = plt.subplots()
-
 # Generate layout
 pos = nx.spring_layout(GRAPH)
-
 # Draw the graph
 nx.draw_networkx_nodes(GRAPH, pos, node_color="lightblue", node_size=520, ax=ax)
-nx.draw_networkx_edges(GRAPH, pos, edge_color="grey", arrows=True, arrowsize=30, ax=ax)
+nx.draw_networkx_edges(GRAPH, pos, edge_color="red", arrows=True, arrowsize=30, ax=ax)
 nx.draw_networkx_labels(GRAPH, pos, font_size=15, font_family="DejaVu Sans", ax=ax)
 nx.draw_networkx_edges(MST, pos, edge_color="green", width=3, ax=ax)
 
@@ -103,12 +94,6 @@ for edge in GRAPH.edges():
         edge_numbering[edge] = edge_counter
         edge_counter+=1
 
-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-# print("Edge numbering (MST edges first, then RED edges), including properties:")
-# for (edge,number) in edge_numbering.items():
-#     (component,value) = edge_properties[edge]
-#     print(f" Edge {edge} : Number {number}, Component: {component}, Value: {value} ")
-
 st.markdown("### Edge Numbering (MST edges first, then RED edges), including properties:")
 
 for (edge, number) in edge_numbering.items():
@@ -116,10 +101,8 @@ for (edge, number) in edge_numbering.items():
     st.write(f"Edge {edge} : Number {number}, Component: {component}, Value: {value}")
 
 
-################################################################################################################################
 
-
-# TIE-SET MATRIX INITIALISATION
+#CYCLE DETECTECTION AND FILLING OF TIE SET MATRIX
 num_total_edges = len(GRAPH.edges())
 num_MST_edges =len(MST.edges())
 num_red_edges = ( num_total_edges - num_MST_edges ) #i.e. no of co-tree edges
@@ -157,6 +140,42 @@ for edge in GRAPH.edges():
 
         except nx.NetworkXNoCycle:
             st.warning(f"⚠️ Red edge {edge} (Number {edge_numbering[edge]}) does not form a cycle.")
+
+
+
+###############################################
+fig, ax = plt.subplots()
+
+# Generate layout
+pos = nx.spring_layout(GRAPH)
+
+# Draw the graph
+nx.draw_networkx_nodes(GRAPH, pos, node_color="lightblue", node_size=520, ax=ax)
+nx.draw_networkx_edges(GRAPH, pos, edge_color="red", arrows=True, arrowsize=30, ax=ax)
+nx.draw_networkx_labels(GRAPH, pos, font_size=15, font_family="DejaVu Sans", ax=ax)
+nx.draw_networkx_edges(MST, pos, edge_color="green",arrows=True, width=3, ax=ax)
+nx.draw_networkx_edge_labels(GRAPH, pos, edge_labels=edge_numbering, ax=ax)
+
+
+# Hide axis
+ax.axis("off")
+
+# Show on Streamlit
+st.pyplot(fig)
+#####################################################
+#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# print("Edge numbering (MST edges first, then RED edges), including properties:")
+# for (edge,number) in edge_numbering.items():
+#     (component,value) = edge_properties[edge]
+#     print(f" Edge {edge} : Number {number}, Component: {component}, Value: {value} ")
+
+
+
+
+################################################################################################################################
+
+
+
 
 
 cut_matrix = np.zeros( ( len(MST.edges()) , num_total_edges ), dtype=int )
