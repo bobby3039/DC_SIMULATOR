@@ -1,4 +1,4 @@
-# Circuit Simulator
+# DC Circuit Simulator
 
 
 ## How to use it
