@@ -2,7 +2,8 @@
 
 
 
-[use it!](https://blank-app-igpqlv707mf.streamlit.app/)
+[![Live Version](https://img.shields.io/badge/Live-Streamlit_App-blue?style=for-the-badge)](https://blank-app-igpqlv707mf.streamlit.app/)
+
 
 ### How to run it on your own machine
 
