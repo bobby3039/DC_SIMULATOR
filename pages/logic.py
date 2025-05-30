@@ -20,22 +20,18 @@ import sympy as sp
 #     (3,1): ("C",1),
    
 # }
-st.title("Logic Page")
 
-# Check if main page was run
-# if "main_run" not in st.session_state:
-#     st.warning("Please run the Main Page first.")
-#     st.stop()
 
-# # Your logic here
-# st.success("Main page was run. Proceeding with logic.")
-
-if "done" in st.session_state and st.session_state.done:
+st.title("Analysis Page")
+if not st.session_state.get("done"):
+    st.warning("Graph is not finalized yet. Please finalize the graph first.")
+    st.stop()
+else:
     GRAPH = nx.DiGraph()
     for u, v in st.session_state.G.edges:
         GRAPH.add_edge(u, v)
-
     edge_properties = dict(st.session_state.edge_properties)
+    
 
 
 s, t = sp.symbols('s t', real=True) # LAPLACE AND TIME  DOMAIN SYMBOLS
